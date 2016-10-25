@@ -25,7 +25,7 @@ CLIENT_SECRET_FILE = 'client_secret.json'
 APPLICATION_NAME = 'IMEI'
 
 headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11'}
-key='G0V-R9M-A4A-TAT-7G3-9G8-A25-STZ'
+key='G0V-55M-A2A-TAT-3FE-922-A25-ETZ'
 url = "http://sickw.com/api.php?key=" + key +"&service=0&imei="
 
 discoveryUrl = ('https://sheets.googleapis.com/$discovery/rest?version=v4')
