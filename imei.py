@@ -1,7 +1,6 @@
 from __future__ import print_function
 import httplib2
 import subprocess
-import tempfile
 import requests
 import sys
 import re
@@ -32,8 +31,6 @@ url = "http://sickw.com/api.php?key=" + key +"&service=0&imei="
 discoveryUrl = ('https://sheets.googleapis.com/$discovery/rest?version=v4')
 spreadsheetId = '1jUZLn29FXy9wBNpCy0SLhvIxu0mjc1ahbjpmJptMXJI'
 
-fp = tempfile.TemporaryFile()
-
 def get_credentials():
 	"""Gets valid user credentials from storage.
 	If nothing has been stored, or if the stored credentials are invalid,
@@ -45,7 +42,7 @@ def get_credentials():
 	credential_dir = os.path.join(home_dir, '.credentials')
 	if not os.path.exists(credential_dir):
 		os.makedirs(credential_dir)
-	credential_path = os.path.join(credential_dir,'sheets.googleapis.com-python-quickstart.json')
+	credential_path = os.path.join(credential_dir,'sheets.googleapis.com-imei.json')
 
 	store = Storage(credential_path)
 	credentials = store.get()
@@ -118,7 +115,7 @@ def main():
 
 	stored_imei = get_imei_list_from_gsheet()
 	
-	update_imei  = [x for x in imei_list + stored_imei if (x not in imei_list) or (x not in stored_imei)]
+	update_imei  = [x for x in imei_list + stored_imei if (x not in stored_imei) and (x in imei_list)]
 
 	if not update_imei:
 		print("[-] Nothing to Update")
@@ -137,49 +134,80 @@ def main():
                 data = data[5:-6].split("<br />")
                 #data.remove('')
                 details = {}
+		#print(data)
                 for s in data:
                         s = s.split(": ")
 			if len(s)>1:
 				details[s[0]] = s[1]
-                try:        
-			fp.write("{'values': [["),
-			fp.write("'"),
-			fp.write(details["Model"]),
-			fp.write("','"),
-			fp.write(details["IMEI Number"]),
-			fp.write("','"),
-			fp.write(details["Serial Number"]),
-			fp.write("','"),
-			fp.write(details["Find My iPhone"]),
-			fp.write("','"),
-			fp.write(details["Warranty Status"]),
-			fp.write("','"),
-			fp.write(details["Estimated Purchase Date"]),
-			fp.write("','"),
-			fp.write(details["Registered Purchase Date"]),
-			fp.write("','"),
-			fp.write(details["Product Sold by"]),
-			fp.write("','"),
-			fp.write(details["Initial Carrier"]),
-			fp.write("','"),
-			fp.write(details["Purchased In"]),
-#	                fp.write("','"),
-#	                fp.write(details["Sim-lock Status"]),
-			fp.write("'"),
-			fp.write("]]}")
+                try:
+			tmp = "{'values': [['"
+
+			if "Model" in details.keys():
+				tmp = tmp + details["Model"] + "','"
+			else:
+				tmp = tmp + "None','"
+
+			tmp = tmp + imei + "','"
+
+			if "Serial Number" in details.keys():
+				tmp = tmp + details["Serial Number"] + "','"
+			else:
+				tmp = tmp + "None','"
+
+			if "FMI Status" in details.keys():
+				tmp = tmp + details["FMI Status"] + "','"
+			elif "Find My iPhone" in details.keys():
+				tmp = tmp + details["Find My iPhone"] + "','"
+			else:
+				tmp = tmp + "None','"
+
+			if "Warranty Status" in details.keys():
+				tmp = tmp + details["Warranty Status"] + "','"
+                        else:
+				tmp = tmp + "None','"
+
+			if "Estimated Purchase Date" in details.keys():
+				tmp = tmp + details["Estimated Purchase Date"] + "','"
+                        else:
+				tmp = tmp + "None','"
+
+			if "Registered Purchase Date" in details.keys():
+				tmp = tmp + details["Registered Purchase Date"] + "','"
+                        else:
+				tmp = tmp + "None','"
+
+			if "Product Sold by" in details.keys():
+				tmp = tmp + details["Product Sold by"] + "','"
+                        else:
+				tmp = tmp + "None','"
+
+			if "Initial Carrier" in details.keys():
+				tmp = tmp + details["Initial Carrier"] + "','"
+			elif "Initial Carrier iPad" in details.keys():
+				tmp = tmp + details["Initial Carrier iPad"] + "','"
+			else:
+				tmp = tmp + "None','"
+
+			if "Purchased In" in details.keys():
+				tmp = tmp + details["Purchased In"] + "','"
+                        else:
+				tmp = tmp + "None','"
+
+			if "Sim-lock Status" in details,keys():
+				tmp = tmp + details["Sim-lock Status"] + "'"
+			else:
+				tmp = tmp + "None'"
+
+			tmp = tmp + "]]}"
+			update_gsheet(ast.literal_eval(tmp))
+			print("[+] Update  Details for IMEI : " + imei)
+
 		except:
+			print("[-] Unable to Update Database")
 			print("[-] Exiting")
 			sys.exit()
-#                break
-
-        fp.seek(0)
-        print("[+] Update DataBase")
-        for line in fp:
-                update_gsheet(ast.literal_eval(line))
                 
-        print("[+] Complete Updating DataBase")
-        fp.close()
-        print("[-] Removing Temporary Files")
+        print("[+] Completed Updating")
         print("[-] Exiting")
         
         sys.exit()
